@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View ,FlatList} from 'react-native';
+import { StyleSheet, Text, View ,FlatList,ScrollView} from 'react-native';
+import {SearchBar,Header} from 'react-native-elements';
 import db from '../config'
 
 
@@ -9,12 +10,19 @@ export default class ReadStoryScreen extends React.Component {
   constructor(){
     super();
     this.state ={
-      allStories:[]
+      allStories:[],
+      dataSource:[],
+      search : ''
     }
   }
   componentDidMount(){
     this.retrieveStories()
   }
+
+  updateSearch = search => {
+    this.setState({ search });
+  };
+
 
   retrieveStories=()=>{
     try {
@@ -35,45 +43,80 @@ export default class ReadStoryScreen extends React.Component {
     }
   };
 
+
+  SearchFilterFunction(text) {
+    //passing the inserted text in textinput
+    const newData = this.state.allStories.filter((item)=> {
+      //applying filter for the inserted text in search bar
+      const itemData = item.title ? item.title.toUpperCase() : ''.toUpperCase();
+      const textData = text.toUpperCase();
+      return itemData.indexOf(textData) > -1;
+    });
+    this.setState({
+      //setting the filtered newData on datasource
+      //After setting the data it will automatically re-render the view
+      dataSource: newData,
+      search: text,
+    });
+  }
+
     render(){
-        return(
-            <View>
-                 <FlatList
-                    data={this.state.allStories}
-                    renderItem={({ item }) => (
-                      <View style={styles.itemContainer}>
-                        <Text>Title: {item.title}</Text>
-                    <Text>Author : {item.author}</Text>
-                      </View>
-                    )}
-                    keyExtractor={(item, index) => index.toString()}
-                    />
-            </View>
-        );
+      return(
+        <View style ={styles.container}>
+           <Header 
+                backgroundColor = {'pink'}
+                centerComponent = {{
+                    text : 'Bed Time Stories',
+                    style : { color: 'white', fontSize: 20}
+                }}
+            />
+          <View styles ={{height:20,width:'100%'}}>
+              <SearchBar
+              placeholder="Type Here..."
+              onChangeText={text => this.SearchFilterFunction(text)}
+              onClear={text => this.SearchFilterFunction('')}
+              value={this.state.search}
+            />
+          </View>
+          
+          <FlatList
+                data={this.state.search === "" ?  this.state.allStories: this.state.dataSource}
+                renderItem={({ item }) => (
+                  <View style={styles.itemContainer}>
+                    <Text>  Title: {item.title}</Text>
+                    <Text>  Author : {item.author}</Text>
+                  </View>
+                )}
+                keyExtractor={(item, index) => index.toString()}
+                /> 
+          
+          
+          
+        </View>  
+      );      
     }
 }
 
+
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },item: {
+  },
+  item: {
     backgroundColor: 'pink',
-    padding: 20,
+    padding:10,
     marginVertical: 8,
     marginHorizontal: 16,
   },
   title: {
     fontSize: 32,
   },
-   itemContainer: {
+  itemContainer: {
     height: 80,
     width:'100%',
     borderWidth: 2,
     borderColor: 'pink',
-    justifyContent: 'center',
+    justifyContent:'center',
     alignSelf: 'center',
   }
 });
